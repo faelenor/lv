@@ -185,6 +185,15 @@ public:
         return *this;
     }
 
+    /// Get is selected
+    [[nodiscard]] bool text_selected() const noexcept {
+        return lv_textarea_text_is_selected(m_obj);
+    }
+
+    [[nodiscard]] Label label() noexcept {
+        return Label(wrap, lv_textarea_get_label(m_obj));
+    }
+
     // size(), width(), height(), fill_width() are inherited from ObjectMixin<Textarea>.
 
     // ==================== Style Shortcuts ====================

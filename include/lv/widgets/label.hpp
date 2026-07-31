@@ -12,6 +12,7 @@
 #include "../core/string_utils.hpp"
 #include <string_view>
 #include <type_traits>
+#include <string>
 
 namespace lv {
 
@@ -137,10 +138,49 @@ public:
         return *this;
     }
 
+    /// Set selection start
+    Label& text_selection_start(int32_t index) noexcept {
+        lv_label_set_text_selection_start(m_obj, index);
+        return *this;
+    }
+
+    /// Set selection end
+    Label& text_selection_end(int32_t index) noexcept {
+        lv_label_set_text_selection_end(m_obj, index);
+        return *this;
+    }
+
     /// Set selection range
     Label& selection(uint32_t start, uint32_t end) noexcept {
-        lv_label_set_text_selection_start(m_obj, start);
-        lv_label_set_text_selection_end(m_obj, end);
+        text_selection_start(start);
+        text_selection_end(end);
+        return *this;
+    }
+
+    /// Clear selection
+    Label& clear_selection() noexcept {
+        selection(LV_LABEL_TEXT_SELECTION_OFF, LV_LABEL_TEXT_SELECTION_OFF);
+        return *this;
+    }
+
+    /// Get selection start
+    [[nodiscard]] int32_t text_selection_start() const noexcept {
+        return lv_label_get_text_selection_start(m_obj);
+    }
+
+    /// Get selection end
+    [[nodiscard]] int32_t text_selection_end() const noexcept {
+        return lv_label_get_text_selection_end(m_obj);
+    }
+
+    /// Delete selected characters
+    Label& text_selection_delete() noexcept {
+        if (text_selection_start() != text_selection_end()) {
+            std::string txt(get_text());
+            txt.erase(text_selection_start(), text_selection_end() - text_selection_start());
+            clear_selection();
+            text(txt.c_str());
+        }
         return *this;
     }
 
@@ -241,10 +281,9 @@ public:
         return *this;
     }
 
-    /// Bind to State<int>
+    /// Bind to State
     template<typename T>
-        requires (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t))
-    Label& bind_text(State<T>& state, const char* fmt = "%d") noexcept {
+    Label& bind_text(State<T>& state, const char* fmt = nullptr) noexcept {
         lv_label_bind_text(m_obj, state.subject(), fmt);
         return *this;
     }

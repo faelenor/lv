@@ -175,6 +175,21 @@ public:
     [[nodiscard]] bool is_hidden() const noexcept {
         return lv_obj_has_flag(m_obj, LV_OBJ_FLAG_HIDDEN);
     }
+
+    /// Get selected button
+    [[nodiscard]] uint32_t selected_button() const noexcept {
+        return lv_keyboard_get_selected_button(m_obj);
+    }
+
+    /// Get button text
+    [[nodiscard]] const char* button_text(uint32_t index) const noexcept {
+        return lv_keyboard_get_button_text(m_obj, index);
+    }
+
+    /// Get selected button text
+    [[nodiscard]] const char* selected_button_text() const noexcept {
+        return button_text(selected_button());
+    }
 };
 
 } // namespace lv

@@ -114,6 +114,8 @@ namespace kFlag {
     constexpr auto ignore_layout       = LV_OBJ_FLAG_IGNORE_LAYOUT;
     constexpr auto floating            = LV_OBJ_FLAG_FLOATING;
     constexpr auto overflow_visible    = LV_OBJ_FLAG_OVERFLOW_VISIBLE;
+    constexpr auto event_trickle       = LV_OBJ_FLAG_EVENT_TRICKLE;
+    constexpr auto state_trickle       = LV_OBJ_FLAG_STATE_TRICKLE;
 #if LV_USE_FLEX
     constexpr auto flex_in_new_track   = LV_OBJ_FLAG_FLEX_IN_NEW_TRACK;
 #endif
