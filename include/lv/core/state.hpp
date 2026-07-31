@@ -31,45 +31,24 @@ namespace lv {
  */
 template<typename T>
 class State {
-    static_assert(std::is_trivially_copyable_v<T>,
-        "State<T> requires trivially copyable types for zero-cost operation");
-
 private:
     lv_subject_t m_subject;
-    T m_value;
-
-    // Type-specific initialization
-    void init_subject() noexcept {
-        if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
-            lv_subject_init_int(&m_subject, static_cast<int32_t>(m_value));
-        } else if constexpr (std::is_pointer_v<T>) {
-            lv_subject_init_pointer(&m_subject, static_cast<void*>(m_value));
-        } else if constexpr (std::is_same_v<T, lv_color_t>) {
-            lv_subject_init_color(&m_subject, m_value);
-        } else {
-            // Generic: use pointer to value
-            lv_subject_init_pointer(&m_subject, &m_value);
-        }
-    }
-
-    // Type-specific update
-    void update_subject() noexcept {
-        if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
-            lv_subject_set_int(&m_subject, static_cast<int32_t>(m_value));
-        } else if constexpr (std::is_pointer_v<T>) {
-            lv_subject_set_pointer(&m_subject, static_cast<void*>(m_value));
-        } else if constexpr (std::is_same_v<T, lv_color_t>) {
-            lv_subject_set_color(&m_subject, m_value);
-        } else {
-            // Notify observers (value changed in place)
-            lv_subject_notify(&m_subject);
-        }
-    }
 
 public:
     /// Construct with initial value
-    explicit State(T initial = T{}) noexcept : m_value(initial) {
-        init_subject();
+    explicit State(const T& initial = T{}) noexcept {
+        if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
+            lv_subject_init_int(&m_subject, static_cast<int32_t>(initial));
+        } else if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
+            lv_subject_init_float(&m_subject, static_cast<float>(initial));
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            // Ugly, but it works for now...
+            lv_subject_init_string(&m_subject, new char[16], new char[16], 16, initial.c_str());
+        } else if constexpr (std::is_pointer_v<T>) {
+            lv_subject_init_pointer(&m_subject, static_cast<void*>(initial), T());
+        } else if constexpr (std::is_same_v<T, lv_color_t>) {
+            lv_subject_init_color(&m_subject, initial);
+        }
     }
 
     /// Destructor
@@ -89,30 +68,46 @@ public:
 
     /// Get current value
     [[nodiscard]] const T& get() const noexcept {
-        return m_value;
+        if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
+            return static_cast<T>(lv_subject_get_int(subject));
+        }
+        
+        if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
+            return static_cast<T>(lv_subject_get_float(subject));
+        }
+        
+        if constexpr (std::is_same_v<T, lv_color_t>) {
+            return lv_subject_get_color(subject);
+        }
+        
+        if constexpr (std::is_same_v<std::remove_const_t<T>, char*>) {
+            return static_cast<T>(lv_subject_get_string(subject));
+        }
+
+        if constexpr (std::is_pointer_v<T>) {
+            return static_cast<T>(lv_subject_get_pointer(subject));
+        }
+        
+        return T{};
     }
 
     /// Get value by implicit conversion
     [[nodiscard]] operator const T&() const noexcept {
-        return m_value;
+        return get();
     }
 
     /// Set new value (notifies observers if changed)
-    void set(T new_value) noexcept {
-        if constexpr (std::is_integral_v<T> || std::is_pointer_v<T>) {
-            if (m_value != new_value) {
-                m_value = new_value;
-                update_subject();
-            }
+    void set(const T& new_value) noexcept {
+        if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
+            lv_subject_set_int(&m_subject, static_cast<int32_t>(new_value));
+        } else if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
+            lv_subject_set_float(&m_subject, static_cast<float>(new_value));
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            lv_subject_copy_string(&m_subject, new_value.c_str());
+        } else if constexpr (std::is_pointer_v<T>) {
+            lv_subject_set_pointer(&m_subject, static_cast<void*>(new_value));
         } else if constexpr (std::is_same_v<T, lv_color_t>) {
-            // Color comparison
-            if (std::memcmp(&m_value, &new_value, sizeof(lv_color_t)) != 0) {
-                m_value = new_value;
-                update_subject();
-            }
-        } else {
-            m_value = new_value;
-            update_subject();
+            lv_subject_set_color(&m_subject, new_value);
         }
     }
 
@@ -125,21 +120,21 @@ public:
 
     /// Increment value (for integral types)
     template<typename U = T>
-        requires std::is_integral_v<U>
+        requires std::is_arithmetic_v<U>
     void increment(U delta = 1) noexcept {
-        set(m_value + delta);
+        set(get() + delta);
     }
 
     /// Decrement value (for integral types)
     template<typename U = T>
-        requires std::is_integral_v<U>
+        requires std::is_arithmetic_v<U>
     void decrement(U delta = 1) noexcept {
-        set(m_value - delta);
+        set(get() - delta);
     }
 
     /// Prefix increment
     template<typename U = T>
-        requires std::is_integral_v<U>
+        requires std::is_arithmetic_v<U>
     State& operator++() noexcept {
         increment();
         return *this;
@@ -147,7 +142,7 @@ public:
 
     /// Prefix decrement
     template<typename U = T>
-        requires std::is_integral_v<U>
+        requires std::is_arithmetic_v<U>
     State& operator--() noexcept {
         decrement();
         return *this;
@@ -155,7 +150,7 @@ public:
 
     /// Add and assign
     template<typename U = T>
-        requires std::is_integral_v<U>
+        requires std::is_arithmetic_v<U>
     State& operator+=(U delta) noexcept {
         increment(delta);
         return *this;
@@ -163,7 +158,7 @@ public:
 
     /// Subtract and assign
     template<typename U = T>
-        requires std::is_integral_v<U>
+        requires std::is_arithmetic_v<U>
     State& operator-=(U delta) noexcept {
         decrement(delta);
         return *this;
@@ -201,18 +196,7 @@ public:
         return lv_subject_add_observer(&m_subject,
             [](lv_observer_t* observer, lv_subject_t* subject) {
                 auto* inst = static_cast<Instance*>(lv_observer_get_user_data(observer));
-                if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
-                    (inst->*MemFn)(static_cast<T>(lv_subject_get_int(subject)));
-                } else if constexpr (std::is_same_v<T, lv_color_t>) {
-                    (inst->*MemFn)(lv_subject_get_color(subject));
-                } else if constexpr (std::is_pointer_v<T>) {
-                    (inst->*MemFn)(static_cast<T>(lv_subject_get_pointer(subject)));
-                } else {
-                    // Fallback for other trivially copyable types stored via pointer
-                    // The subject stores a pointer to the value in State::m_value
-                    auto* value_ptr = static_cast<const T*>(lv_subject_get_pointer(subject));
-                    (inst->*MemFn)(*value_ptr);
-                }
+                (inst->*MemFn)(get());
             }, instance);
     }
 
@@ -303,6 +287,11 @@ template<typename T>
 /// Get int value from subject (for use in observer callbacks)
 [[nodiscard]] inline int32_t subject_get_int(lv_subject_t* subject) noexcept {
     return lv_subject_get_int(subject);
+}
+
+/// Get int value from subject (for use in observer callbacks)
+[[nodiscard]] inline float subject_get_float(lv_subject_t* subject) noexcept {
+    return lv_subject_get_float(subject);
 }
 
 /// Get color value from subject (for use in observer callbacks)
