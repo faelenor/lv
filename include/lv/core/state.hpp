@@ -67,25 +67,25 @@ public:
     // ==================== Accessors ====================
 
     /// Get current value
-    [[nodiscard]] const T& get() const noexcept {
+    [[nodiscard]] const T get() noexcept {
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
-            return static_cast<T>(lv_subject_get_int(subject));
+            return static_cast<T>(lv_subject_get_int(&m_subject));
         }
         
         if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
-            return static_cast<T>(lv_subject_get_float(subject));
+            return static_cast<T>(lv_subject_get_float(&m_subject));
         }
         
         if constexpr (std::is_same_v<T, lv_color_t>) {
-            return lv_subject_get_color(subject);
+            return lv_subject_get_color(&m_subject);
         }
         
         if constexpr (std::is_same_v<std::remove_const_t<T>, char*>) {
-            return static_cast<T>(lv_subject_get_string(subject));
+            return static_cast<T>(lv_subject_get_string(&m_subject));
         }
 
         if constexpr (std::is_pointer_v<T>) {
-            return static_cast<T>(lv_subject_get_pointer(subject));
+            return static_cast<T>(lv_subject_get_pointer(&m_subject));
         }
         
         return T{};
@@ -196,7 +196,7 @@ public:
         return lv_subject_add_observer(&m_subject,
             [](lv_observer_t* observer, lv_subject_t* subject) {
                 auto* inst = static_cast<Instance*>(lv_observer_get_user_data(observer));
-                (inst->*MemFn)(get());
+                (inst->*MemFn)();
             }, instance);
     }
 

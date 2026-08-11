@@ -41,7 +41,7 @@ inline void deinit() noexcept {
 /**
  * @brief Sleep for milliseconds (platform-independent)
  */
-inline void sleep_ms(uint32_t ms) noexcept {
+/*inline void sleep_ms(uint32_t ms) noexcept {
 #ifdef __unix__
     usleep(ms * 1000);
 #elif defined(_WIN32)
@@ -49,9 +49,9 @@ inline void sleep_ms(uint32_t ms) noexcept {
 #else
     // Fallback: busy wait (not recommended)
     volatile uint32_t count = ms * 1000;
-    while (count--) {}
+    while (count = count - 1) {}
 #endif
-}
+}*/
 
 /**
  * @brief Run one iteration of the main loop
@@ -78,12 +78,12 @@ inline uint32_t tick() noexcept {
  * lv::run();  // Never returns
  * @endcode
  */
-[[noreturn]] inline void run() noexcept {
+/*[[noreturn]] inline void run() noexcept {
     while (true) {
         uint32_t time_till_next = lv_timer_handler();
         sleep_ms(time_till_next);
     }
-}
+}*/
 
 /**
  * @brief Run the main loop with a custom tick callback
@@ -101,25 +101,25 @@ inline uint32_t tick() noexcept {
  * });
  * @endcode
  */
-template<typename F>
+/*template<typename F>
 inline void run_with(F&& on_tick) {
     while (on_tick()) {
         uint32_t time_till_next = lv_timer_handler();
         sleep_ms(time_till_next);
     }
-}
+}*/
 
 /**
  * @brief Run for a limited number of iterations (for testing)
  *
  * @param max_iterations Maximum number of loop iterations
  */
-inline void run_for(uint32_t max_iterations) noexcept {
+/*inline void run_for(uint32_t max_iterations) noexcept {
     for (uint32_t i = 0; i < max_iterations; ++i) {
         uint32_t time_till_next = lv_timer_handler();
         sleep_ms(time_till_next);
     }
-}
+}*/
 
 
 /**

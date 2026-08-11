@@ -41,27 +41,27 @@ public:
     // ==================== Content ====================
 
     /// Add title
-    [[nodiscard]] ObjectRef add_title(const char* txt) noexcept {
+    ObjectRef add_title(const char* txt) noexcept {
         return ObjectRef(lv_msgbox_add_title(m_obj, txt));
     }
 
     /// Add text content
-    [[nodiscard]] ObjectRef add_text(const char* txt) noexcept {
+    ObjectRef add_text(const char* txt) noexcept {
         return ObjectRef(lv_msgbox_add_text(m_obj, txt));
     }
 
     /// Add header button (e.g., close button)
-    [[nodiscard]] ObjectRef add_header_button(const void* icon) noexcept {
+    ObjectRef add_header_button(const void* icon) noexcept {
         return ObjectRef(lv_msgbox_add_header_button(m_obj, icon));
     }
 
     /// Add footer button
-    [[nodiscard]] ObjectRef add_footer_button(const char* txt) noexcept {
+    ObjectRef add_footer_button(const char* txt) noexcept {
         return ObjectRef(lv_msgbox_add_footer_button(m_obj, txt));
     }
 
     /// Add close button to header
-    [[nodiscard]] ObjectRef add_close_button() noexcept {
+    ObjectRef add_close_button() noexcept {
         return ObjectRef(lv_msgbox_add_close_button(m_obj));
     }
 
