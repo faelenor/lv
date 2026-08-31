@@ -92,7 +92,7 @@ public:
     }
 
     /// Get value by implicit conversion
-    [[nodiscard]] operator const T&() const noexcept {
+    [[nodiscard]] operator const T() noexcept {
         return get();
     }
 
