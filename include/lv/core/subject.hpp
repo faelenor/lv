@@ -50,40 +50,44 @@ private:
     [[nodiscard]] Derived& derived() noexcept { return static_cast<Derived&>(*this); }
     [[nodiscard]] const Derived& derived() const noexcept { return static_cast<const Derived&>(*this); }
 
-    /// The subject as LVGL's C API wants it: every lv_subject_get_* takes a non-const pointer
-    /// even though it only reads, so reading through a const handle needs the cast. Nothing
-    /// here ever writes through it - the writes name derived().subject() themselves.
-    [[nodiscard]] lv_subject_t* borrowed() const noexcept {
+public:
+    /**
+     * @brief The lv_subject_t behind this handle
+     *
+     * Non-const, because every lv_subject_* API takes a non-const pointer - including the
+     * ones that only read. It is what the widget bind helpers need, so that they can accept a
+     * handle they will not write to. The cast is safe in that direction: nothing here writes
+     * through it, and the writes in this class name derived().subject() themselves.
+     */
+    [[nodiscard]] lv_subject_t* handle() const noexcept {
         return const_cast<lv_subject_t*>(derived().subject());
     }
-
-public:
     // ==================== Accessors ====================
 
     /// Get current value. A handle with no subject yet reads as T{}.
     [[nodiscard]] T get() const noexcept {
-        if (borrowed() == nullptr) {
+        if (handle() == nullptr) {
             return T{};
         }
 
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
-            return static_cast<T>(lv_subject_get_int(borrowed()));
+            return static_cast<T>(lv_subject_get_int(handle()));
         }
 
         if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
-            return static_cast<T>(lv_subject_get_float(borrowed()));
+            return static_cast<T>(lv_subject_get_float(handle()));
         }
 
         if constexpr (std::is_same_v<T, lv_color_t>) {
-            return lv_subject_get_color(borrowed());
+            return lv_subject_get_color(handle());
         }
 
         if constexpr (std::is_same_v<std::remove_const_t<T>, char*>) {
-            return static_cast<T>(lv_subject_get_string(borrowed()));
+            return static_cast<T>(lv_subject_get_string(handle()));
         }
 
         if constexpr (std::is_pointer_v<T>) {
-            return static_cast<T>(lv_subject_get_pointer(borrowed()));
+            return static_cast<T>(lv_subject_get_pointer(handle()));
         }
 
         return T{};
@@ -97,7 +101,7 @@ public:
     /// Set new value (notifies observers if changed). Writing to a handle with no subject
     /// yet is ignored, which is what lets one be given its subject later.
     void set(const T& new_value) noexcept {
-        if (borrowed() == nullptr) {
+        if (handle() == nullptr) {
             return;
         }
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
@@ -115,7 +119,7 @@ public:
 
     /// Force notify all observers (even if value unchanged)
     void notify() noexcept {
-        lv_subject_notify(borrowed());
+        lv_subject_notify(handle());
     }
 
     // ==================== Modifiers (for numeric types) ====================
@@ -186,7 +190,7 @@ public:
     template<auto MemFn, typename Instance>
         requires std::is_member_function_pointer_v<decltype(MemFn)>
     lv_observer_t* observe(Instance* instance) const noexcept {
-        return lv_subject_add_observer(borrowed(),
+        return lv_subject_add_observer(handle(),
             [](lv_observer_t* observer, lv_subject_t*) {
                 auto* inst = static_cast<Instance*>(lv_observer_get_user_data(observer));
                 (inst->*MemFn)();
@@ -202,7 +206,7 @@ public:
      * @param user_data User data passed to callback
      */
     lv_observer_t* observe_raw(lv_observer_cb_t cb, void* user_data = nullptr) const noexcept {
-        return lv_subject_add_observer(borrowed(), cb, user_data);
+        return lv_subject_add_observer(handle(), cb, user_data);
     }
 
     /**
@@ -216,7 +220,7 @@ public:
      * @param user_data User data passed to callback
      */
     lv_observer_t* observe_obj(lv_observer_cb_t cb, lv_obj_t* target_obj, void* user_data = nullptr) const noexcept {
-        return lv_subject_add_observer_obj(borrowed(), cb, target_obj, user_data);
+        return lv_subject_add_observer_obj(handle(), cb, target_obj, user_data);
     }
 
     /**
@@ -227,7 +231,7 @@ public:
     template<typename ObjType>
         requires requires(ObjType o) { { o.get() } -> std::convertible_to<lv_obj_t*>; }
     lv_observer_t* observe_obj(lv_observer_cb_t cb, ObjType target_obj, void* user_data = nullptr) const noexcept {
-        return lv_subject_add_observer_obj(borrowed(), cb, target_obj.get(), user_data);
+        return lv_subject_add_observer_obj(handle(), cb, target_obj.get(), user_data);
     }
 };
 

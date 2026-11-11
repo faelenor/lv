@@ -283,8 +283,8 @@ public:
 
     /// Bind to Subject
     template<typename T>
-    Label& bind_text(Subject<T>& state, const char* fmt = nullptr) noexcept {
-        lv_label_bind_text(m_obj, state.subject(), fmt);
+    Label& bind_text(const Subject<T>& state, const char* fmt = nullptr) noexcept {
+        lv_label_bind_text(m_obj, state.handle(), fmt);
         return *this;
     }
 #endif

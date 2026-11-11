@@ -211,8 +211,8 @@ public:
     /// Bind to Subject<int>
     template<typename T>
         requires (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t))
-    Slider& bind(Subject<T>& state) noexcept {
-        lv_slider_bind_value(m_obj, state.subject());
+    Slider& bind(const Subject<T>& state) noexcept {
+        lv_slider_bind_value(m_obj, state.handle());
         return *this;
     }
 #endif
