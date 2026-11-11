@@ -70,7 +70,7 @@ lv::Chart::Axis::primary_y
 Constants used across multiple widgets are in `k`-prefixed namespaces with snake_case values:
 
 ```cpp
-// Note: kState (not State) to avoid conflict with State<T> reactive state template
+// Note: kState (not State) to avoid conflict with Subject<T> reactive state template
 namespace kState {
     constexpr auto checked = LV_STATE_CHECKED;
     constexpr auto pressed = LV_STATE_PRESSED;

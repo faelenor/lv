@@ -24,7 +24,7 @@ int main() {
 - **Zero-cost abstractions** - Every wrapper is `sizeof(void*)`, producing identical assembly to C
 - **Type-safe events** - Compile-time verified callbacks with member function pointers
 - **Fluent API** - Method chaining for declarative, readable UI code
-- **Reactive state** - `State<T>` with automatic UI updates via LVGL's observer system
+- **Reactive state** - `Subject<T>` with automatic UI updates via LVGL's observer system
 - **Modern C++20** - Concepts, `[[nodiscard]]`, `noexcept`, no exceptions
 - **Header-only** - Easy integration, just add to include path
 - **35 widgets wrapped** - Full coverage of LVGL widget set
@@ -34,7 +34,7 @@ int main() {
 
 ```cpp
 class CounterApp : public lv::Component<CounterApp> {
-    lv::State<int> m_count{0};
+    lv::Subject<int> m_count{0};
 
 public:
     lv::ObjectView build(lv::ObjectView parent) {
@@ -114,7 +114,7 @@ button.on_click<&MyApp::handle_click>(this);
 button.on_click([](lv::Event e) { /* ... */ });
 
 // Reactive: UI auto-updates when state changes
-lv::State<int> value{0};
+lv::Subject<int> value{0};
 label.bind_text(value, "Value: %d");
 value.set(42);  // Label updates automatically
 ```

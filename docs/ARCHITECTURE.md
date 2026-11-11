@@ -61,7 +61,7 @@ Most widgets use non-owning semantics because LVGL's parent-child hierarchy mana
 
 ### 5. No Hidden Allocations
 
-The library avoids heap allocations in the wrapper layer. State management (`lv::State<T>`) embeds the LVGL subject directly, avoiding indirection.
+The library avoids heap allocations in the wrapper layer. State management (`lv::Subject<T>`) embeds the LVGL subject directly, avoiding indirection.
 
 ---
 
@@ -103,7 +103,7 @@ The library avoids heap allocations in the wrapper layer. State management (`lv:
 | `anim.hpp` | Animation system with path callbacks |
 | `anim_timeline.hpp` | RAII `AnimTimeline` for sequencing animations |
 | `screen.hpp` | Screen management, `Navigator` for screen stack |
-| `state.hpp` | Reactive `State<T>` using LVGL observer system |
+| `state.hpp` | Reactive `Subject<T>` using LVGL observer system |
 | `component.hpp` | CRTP `Component<Derived>` base for custom widgets |
 | `string_utils.hpp` | String utilities including `lv::snprintf()` |
 | `image.hpp` | Image handling utilities |
@@ -297,12 +297,12 @@ The system stores a pointer to the instance in LVGL's user data and uses a stati
 
 ## Reactive State System
 
-### State<T>
+### Subject<T>
 
 A reactive container that triggers UI updates when changed:
 
 ```cpp
-lv::State<int> counter{0};
+lv::Subject<int> counter{0};
 
 // In component build()
 lv::Label::create(parent)
@@ -314,9 +314,9 @@ counter.set(counter.get() + 1);
 
 ### Integration with LVGL Observer
 
-`State<T>` wraps `lv_subject_t` from LVGL's observer system:
+`Subject<T>` wraps `lv_subject_t` from LVGL's observer system:
 - Changes notify all bound widgets
-- No heap allocation (subject embedded in State object)
+- No heap allocation (subject embedded in the Subject object)
 - Supports int, bool, color, pointer types
 
 ---
@@ -377,7 +377,7 @@ protected:
 
 ```cpp
 class CounterView : public lv::Component<CounterView> {
-    lv::State<int> count{0};
+    lv::Subject<int> count{0};
 
 public:
     lv::ObjectView build(lv::ObjectView parent) {
@@ -488,7 +488,7 @@ include/lv/
 │   ├── anim.hpp           # Animation
 │   ├── anim_timeline.hpp  # Animation timeline
 │   ├── screen.hpp         # Screen, Navigator
-│   ├── state.hpp          # Reactive State<T>
+│   ├── state.hpp          # Reactive Subject<T>
 │   ├── component.hpp      # Component base
 │   ├── fs.hpp             # Filesystem (File, Directory)
 │   ├── snapshot.hpp       # Object screenshot capture
@@ -529,7 +529,7 @@ include/lv/
 #include <lv/lv.hpp>
 
 class MyApp : public lv::Component<MyApp> {
-    lv::State<int> counter{0};
+    lv::Subject<int> counter{0};
 
 public:
     lv::ObjectView build(lv::ObjectView parent) {

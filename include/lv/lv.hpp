@@ -16,7 +16,7 @@
  * #include <lv/lv.hpp>
  *
  * class MyApp : public lv::Component<MyApp> {
- *     lv::State<int> counter{0};
+ *     lv::Subject<int> counter{0};
  *
  * public:
  *     lv::ObjectView build(lv::ObjectView parent) {
@@ -248,9 +248,9 @@
 #include "libs/svg.hpp"
 #endif
 
-// State (requires LV_USE_OBSERVER)
+// Subject (requires LV_USE_OBSERVER)
 #if LV_USE_OBSERVER
-#include "core/state.hpp"
+#include "core/subject.hpp"
 #endif
 
 /**
@@ -282,8 +282,8 @@
  * - `vbox()` - Vertical flex container
  *
  * ### Reactive State
- * - `State<T>` - Reactive value (triggers UI updates)
- * - `IntState`, `BoolState`, `ColorState` - Common specializations
+ * - `Subject<T>` - Reactive value (triggers UI updates)
+ * - `IntSubject`, `BoolSubject`, `ColorSubject` - Common specializations
  *
  * ### Components
  * - `Component<Derived>` - CRTP base for UI components
@@ -302,7 +302,7 @@
  *
  * All wrappers are designed for zero or minimal heap allocation:
  * - Widget wrappers are just pointers (8 bytes)
- * - State<T> embeds lv_subject_t (no heap)
+ * - Subject<T> embeds lv_subject_t (no heap)
  * - Style embeds lv_style_t (no heap)
  * - Event callbacks use user_data (no heap)
  *

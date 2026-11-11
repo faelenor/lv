@@ -6,7 +6,7 @@
  *
  * Demonstrates:
  * - lv::Timer with type-safe member function callbacks
- * - lv::IntState for reactive bindings
+ * - lv::IntSubject for reactive bindings
  * - C++ opacity constants (lv::opa::*)
  * - C++ size helpers (lv::pct, lv::kSize::content)
  */
@@ -32,15 +32,15 @@ class HomePage {
     lv::Roller m_roller_1;
 
     // Reactive state for speed updates
-    lv::IntState m_speed_arc{0};
-    lv::IntState m_speed_roller{0};
+    lv::IntSubject m_speed_arc{0};
+    lv::IntSubject m_speed_roller{0};
 
     // RAII timer - automatically deleted in destructor
     lv::Timer m_anim_timer{};
 
 public:
     void init() {
-        // IntState is initialized in member declaration
+        // IntSubject is initialized in member declaration
     }
 
     void deinit() {

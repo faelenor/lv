@@ -33,7 +33,7 @@ class EbikeDemo {
     SettingsPage m_settings_page;
     StatsPage m_stats_page;
 
-    lv::IntState m_language_subject{0};
+    lv::IntSubject m_language_subject{0};
 
     lv::Image m_menu_icons[3];
 

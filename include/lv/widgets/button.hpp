@@ -157,10 +157,10 @@ public:
         return disabled(!v);
     }
     
-    /// Bind to State<bool>
+    /// Bind to Subject<bool>
     template<typename T>
         requires std::is_same_v<T, bool>
-    Button& bind(State<T>& state) noexcept {
+    Button& bind(Subject<T>& state) noexcept {
         lv_obj_bind_checked(m_obj, state.subject());
         return *this;
     }

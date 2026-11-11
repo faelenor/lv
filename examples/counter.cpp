@@ -4,7 +4,7 @@
  *
  * This example shows:
  * - Component pattern with CRTP
- * - Reactive State<T> for automatic UI updates
+ * - Reactive Subject<T> for automatic UI updates
  * - Zero-cost event callbacks with member functions
  * - Fluent layout DSL (vbox, hbox)
  * - Pure C++ API - no raw pointers or C function calls
@@ -27,7 +27,7 @@
  * Demonstrates reactive state binding and event handling.
  */
 class CounterApp : public lv::Component<CounterApp> {
-    lv::State<int> m_count{0};
+    lv::Subject<int> m_count{0};
 
 public:
     lv::ObjectView build(lv::ObjectView parent) {
@@ -79,7 +79,7 @@ public:
     }
 
 private:
-    // State<T> update methods:
+    // Subject<T> update methods:
     // - operator++/-- : modify and notify observers (triggers UI update)
     // - set(value)    : assign new value and notify observers
     // - notify()      : manually trigger observers without changing value

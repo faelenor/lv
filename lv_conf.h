@@ -52,7 +52,7 @@
  * FEATURE CONFIGURATION
  *=======================*/
 
-/* Observer - REQUIRED for State<T> */
+/* Observer - REQUIRED for Subject<T> */
 #define LV_USE_OBSERVER 1
 
 /* Flex and Grid layouts */

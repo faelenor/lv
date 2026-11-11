@@ -13,7 +13,7 @@
 namespace lv {
 
 #if LV_USE_OBSERVER
-template<typename T> class State;  // forward declaration for bind()
+template<typename T> class Subject;  // forward declaration for bind()
 #endif
 
 /**
@@ -133,10 +133,10 @@ public:
         return *this;
     }
 
-    /// Bind to State<bool>
+    /// Bind to Subject<bool>
     template<typename T>
         requires std::is_same_v<T, bool>
-    Switch& bind(State<T>& state) noexcept {
+    Switch& bind(Subject<T>& state) noexcept {
         lv_obj_bind_checked(m_obj, state.subject());
         return *this;
     }

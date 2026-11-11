@@ -287,14 +287,14 @@ static_assert(sizeof(svg::RenderObj) == sizeof(void*),
 // ==================== State Types ====================
 
 #if LV_USE_OBSERVER
-static_assert(sizeof(IntState) <= sizeof(lv_subject_t) + sizeof(int32_t) + alignof(lv_subject_t),
-    "IntState has excessive overhead");
+static_assert(sizeof(IntSubject) <= sizeof(lv_subject_t) + sizeof(int32_t) + alignof(lv_subject_t),
+    "IntSubject has excessive overhead");
 
-static_assert(sizeof(BoolState) <= sizeof(lv_subject_t) + sizeof(bool) + alignof(lv_subject_t),
-    "BoolState has excessive overhead");
+static_assert(sizeof(BoolSubject) <= sizeof(lv_subject_t) + sizeof(bool) + alignof(lv_subject_t),
+    "BoolSubject has excessive overhead");
 
-static_assert(sizeof(ColorState) <= sizeof(lv_subject_t) + sizeof(lv_color_t) + alignof(lv_subject_t),
-    "ColorState has excessive overhead");
+static_assert(sizeof(ColorSubject) <= sizeof(lv_subject_t) + sizeof(lv_color_t) + alignof(lv_subject_t),
+    "ColorSubject has excessive overhead");
 #endif
 
 // ==================== Verification Complete ====================

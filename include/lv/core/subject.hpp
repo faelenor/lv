@@ -1,14 +1,14 @@
 #pragma once
 
 /**
- * @file state.hpp
+ * @file subject.hpp
  * @brief Reactive state in two forms: one that owns its subject, one that borrows.
  *
- * State<T> owns an lv_subject_t and initialises it in place. No heap allocation, and the
- * subject lives exactly as long as the State does - which is what makes it usable for
+ * Subject<T> owns an lv_subject_t and initialises it in place. No heap allocation, and the
+ * subject lives exactly as long as the Subject does - which is what makes it usable for
  * application state declared as a member.
  *
- * StateRef<T> borrows one. It is built from an lv_subject_t* and owns nothing, so it wraps a
+ * SubjectRef<T> borrows one. It is built from an lv_subject_t* and owns nothing, so it wraps a
  * subject created elsewhere: one the LVGL Pro export generated, for instance, where the
  * generator allocates the subject (lv_subject_create) and hands out the pointer. Without
  * this form there is no way to use such a subject through the wrapper at all, and the only
@@ -20,7 +20,7 @@
  *
  *     lv_subject_t* subject() noexcept;
  *
- * StateRef is pointer-sized. State is one lv_subject_t plus its value - unchanged from when
+ * SubjectRef is pointer-sized. Subject is one lv_subject_t plus its value - unchanged from when
  * it was the only form, because the mixin holds nothing and the empty base costs nothing.
  */
 
@@ -36,7 +36,7 @@
 namespace lv {
 
 /**
- * @brief The reactive interface, shared by State and StateRef
+ * @brief The reactive interface, shared by State and SubjectRef
  *
  * Holds no data: every access goes through the derived class's own subject(), so the base
  * contributes nothing to the object's size (empty base optimisation).
@@ -50,47 +50,54 @@ private:
     [[nodiscard]] Derived& derived() noexcept { return static_cast<Derived&>(*this); }
     [[nodiscard]] const Derived& derived() const noexcept { return static_cast<const Derived&>(*this); }
 
+    /// The subject as LVGL's C API wants it: every lv_subject_get_* takes a non-const pointer
+    /// even though it only reads, so reading through a const handle needs the cast. Nothing
+    /// here ever writes through it - the writes name derived().subject() themselves.
+    [[nodiscard]] lv_subject_t* borrowed() const noexcept {
+        return const_cast<lv_subject_t*>(derived().subject());
+    }
+
 public:
     // ==================== Accessors ====================
 
     /// Get current value. A handle with no subject yet reads as T{}.
-    [[nodiscard]] T get() noexcept {
-        if (derived().subject() == nullptr) {
+    [[nodiscard]] T get() const noexcept {
+        if (borrowed() == nullptr) {
             return T{};
         }
 
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
-            return static_cast<T>(lv_subject_get_int(derived().subject()));
+            return static_cast<T>(lv_subject_get_int(borrowed()));
         }
 
         if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
-            return static_cast<T>(lv_subject_get_float(derived().subject()));
+            return static_cast<T>(lv_subject_get_float(borrowed()));
         }
 
         if constexpr (std::is_same_v<T, lv_color_t>) {
-            return lv_subject_get_color(derived().subject());
+            return lv_subject_get_color(borrowed());
         }
 
         if constexpr (std::is_same_v<std::remove_const_t<T>, char*>) {
-            return static_cast<T>(lv_subject_get_string(derived().subject()));
+            return static_cast<T>(lv_subject_get_string(borrowed()));
         }
 
         if constexpr (std::is_pointer_v<T>) {
-            return static_cast<T>(lv_subject_get_pointer(derived().subject()));
+            return static_cast<T>(lv_subject_get_pointer(borrowed()));
         }
 
         return T{};
     }
 
     /// Get value by implicit conversion
-    [[nodiscard]] operator T() noexcept {
+    [[nodiscard]] operator T() const noexcept {
         return get();
     }
 
     /// Set new value (notifies observers if changed). Writing to a handle with no subject
     /// yet is ignored, which is what lets one be given its subject later.
     void set(const T& new_value) noexcept {
-        if (derived().subject() == nullptr) {
+        if (borrowed() == nullptr) {
             return;
         }
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
@@ -108,7 +115,7 @@ public:
 
     /// Force notify all observers (even if value unchanged)
     void notify() noexcept {
-        lv_subject_notify(derived().subject());
+        lv_subject_notify(borrowed());
     }
 
     // ==================== Modifiers (for numeric types) ====================
@@ -178,8 +185,8 @@ public:
      */
     template<auto MemFn, typename Instance>
         requires std::is_member_function_pointer_v<decltype(MemFn)>
-    lv_observer_t* observe(Instance* instance) noexcept {
-        return lv_subject_add_observer(derived().subject(),
+    lv_observer_t* observe(Instance* instance) const noexcept {
+        return lv_subject_add_observer(borrowed(),
             [](lv_observer_t* observer, lv_subject_t*) {
                 auto* inst = static_cast<Instance*>(lv_observer_get_user_data(observer));
                 (inst->*MemFn)();
@@ -194,8 +201,8 @@ public:
      * @param cb LVGL observer callback
      * @param user_data User data passed to callback
      */
-    lv_observer_t* observe_raw(lv_observer_cb_t cb, void* user_data = nullptr) noexcept {
-        return lv_subject_add_observer(derived().subject(), cb, user_data);
+    lv_observer_t* observe_raw(lv_observer_cb_t cb, void* user_data = nullptr) const noexcept {
+        return lv_subject_add_observer(borrowed(), cb, user_data);
     }
 
     /**
@@ -208,8 +215,8 @@ public:
      * @param target_obj The LVGL object to tie the observer's lifecycle to
      * @param user_data User data passed to callback
      */
-    lv_observer_t* observe_obj(lv_observer_cb_t cb, lv_obj_t* target_obj, void* user_data = nullptr) noexcept {
-        return lv_subject_add_observer_obj(derived().subject(), cb, target_obj, user_data);
+    lv_observer_t* observe_obj(lv_observer_cb_t cb, lv_obj_t* target_obj, void* user_data = nullptr) const noexcept {
+        return lv_subject_add_observer_obj(borrowed(), cb, target_obj, user_data);
     }
 
     /**
@@ -219,8 +226,8 @@ public:
      */
     template<typename ObjType>
         requires requires(ObjType o) { { o.get() } -> std::convertible_to<lv_obj_t*>; }
-    lv_observer_t* observe_obj(lv_observer_cb_t cb, ObjType target_obj, void* user_data = nullptr) noexcept {
-        return lv_subject_add_observer_obj(derived().subject(), cb, target_obj.get(), user_data);
+    lv_observer_t* observe_obj(lv_observer_cb_t cb, ObjType target_obj, void* user_data = nullptr) const noexcept {
+        return lv_subject_add_observer_obj(borrowed(), cb, target_obj.get(), user_data);
     }
 };
 
@@ -236,13 +243,13 @@ public:
  * @tparam T Value type (int32_t, lv_color_t, pointer types supported)
  */
 template<typename T>
-class State : public SubjectMixin<State<T>, T> {
+class Subject : public SubjectMixin<Subject<T>, T> {
 private:
     lv_subject_t m_subject;
 
 public:
     /// Construct with initial value
-    explicit State(const T& initial = T{}) noexcept {
+    explicit Subject(const T& initial = T{}) noexcept {
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
             lv_subject_init_int(&m_subject, static_cast<int32_t>(initial));
         } else if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
@@ -258,17 +265,17 @@ public:
     }
 
     /// Destructor
-    ~State() noexcept {
+    ~Subject() noexcept {
         lv_subject_deinit(&m_subject);
     }
 
     // Non-copyable (subjects can't be copied)
-    State(const State&) = delete;
-    State& operator=(const State&) = delete;
+    Subject(const Subject&) = delete;
+    Subject& operator=(const Subject&) = delete;
 
     // Non-movable (subjects have internal pointers)
-    State(State&&) = delete;
-    State& operator=(State&&) = delete;
+    Subject(Subject&&) = delete;
+    Subject& operator=(Subject&&) = delete;
 
     /// The subject this state owns
     [[nodiscard]] lv_subject_t* subject() noexcept { return &m_subject; }
@@ -287,16 +294,16 @@ public:
  * @tparam T Value type, which must match the subject's own type
  */
 template<typename T>
-class StateRef : public SubjectMixin<StateRef<T>, T> {
+class SubjectRef : public SubjectMixin<SubjectRef<T>, T> {
 private:
     lv_subject_t* m_subject;
 
 public:
     /// Borrow an existing subject. A null subject is allowed and reads as T{}.
-    constexpr StateRef(lv_subject_t* subject) noexcept : m_subject(subject) {}
+    constexpr SubjectRef(lv_subject_t* subject) noexcept : m_subject(subject) {}
 
-    /// Borrow the subject owned by a State of the same type
-    constexpr StateRef(State<T>& state) noexcept : m_subject(state.subject()) {}
+    /// Borrow the subject owned by a Subject of the same type
+    constexpr SubjectRef(Subject<T>& owned) noexcept : m_subject(owned.subject()) {}
 
     /// The subject being borrowed
     [[nodiscard]] lv_subject_t* subject() noexcept { return m_subject; }
@@ -304,31 +311,31 @@ public:
 };
 
 
-// ==================== Specialized State Types ====================
+// ==================== Specialized Subject Types ====================
 
 /// Integer state (most common)
-using IntState = State<int32_t>;
+using IntSubject = Subject<int32_t>;
 
 /// Boolean state
-using BoolState = State<bool>;
+using BoolSubject = Subject<bool>;
 
 /// Color state
-using ColorState = State<lv_color_t>;
+using ColorSubject = Subject<lv_color_t>;
 
 // ==================== Zero-Cost Verification ====================
 
-// Static assertions to verify State<T> overhead is minimal
-// State must be exactly lv_subject_t + T (no vtable, no extra padding beyond alignment)
-static_assert(sizeof(IntState) <= sizeof(lv_subject_t) + sizeof(int32_t) + alignof(lv_subject_t),
-    "IntState should have minimal overhead over lv_subject_t + value");
-static_assert(sizeof(BoolState) <= sizeof(lv_subject_t) + sizeof(bool) + alignof(lv_subject_t),
-    "BoolState should have minimal overhead over lv_subject_t + value");
-static_assert(sizeof(ColorState) <= sizeof(lv_subject_t) + sizeof(lv_color_t) + alignof(lv_subject_t),
-    "ColorState should have minimal overhead over lv_subject_t + value");
+// Static assertions to verify Subject<T> overhead is minimal
+// Subject must be exactly lv_subject_t + T (no vtable, no extra padding beyond alignment)
+static_assert(sizeof(IntSubject) <= sizeof(lv_subject_t) + sizeof(int32_t) + alignof(lv_subject_t),
+    "IntSubject should have minimal overhead over lv_subject_t + value");
+static_assert(sizeof(BoolSubject) <= sizeof(lv_subject_t) + sizeof(bool) + alignof(lv_subject_t),
+    "BoolSubject should have minimal overhead over lv_subject_t + value");
+static_assert(sizeof(ColorSubject) <= sizeof(lv_subject_t) + sizeof(lv_color_t) + alignof(lv_subject_t),
+    "ColorSubject should have minimal overhead over lv_subject_t + value");
 
 // A borrowing handle must cost one pointer and nothing else
-static_assert(sizeof(StateRef<int32_t>) == sizeof(void*),
-    "StateRef must be exactly pointer-sized");
+static_assert(sizeof(SubjectRef<int32_t>) == sizeof(void*),
+    "SubjectRef must be exactly pointer-sized");
 
 // ==================== Observer Helper Functions ====================
 

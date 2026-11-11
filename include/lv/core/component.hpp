@@ -36,7 +36,7 @@ namespace lv {
  * Usage:
  * @code
  * class MyComponent : public lv::Component<MyComponent> {
- *     lv::State<int> counter{0};
+ *     lv::Subject<int> counter{0};
  *
  * public:
  *     lv::ObjectView build(lv::ObjectView parent) {

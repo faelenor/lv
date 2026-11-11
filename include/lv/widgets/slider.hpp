@@ -13,7 +13,7 @@
 namespace lv {
 
 #if LV_USE_OBSERVER
-template<typename T> class State;  // forward declaration for bind()
+template<typename T> class Subject;  // forward declaration for bind()
 #endif
 
 /**
@@ -208,10 +208,10 @@ public:
         return *this;
     }
 
-    /// Bind to State<int>
+    /// Bind to Subject<int>
     template<typename T>
         requires (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t))
-    Slider& bind(State<T>& state) noexcept {
+    Slider& bind(Subject<T>& state) noexcept {
         lv_slider_bind_value(m_obj, state.subject());
         return *this;
     }

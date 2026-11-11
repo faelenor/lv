@@ -529,17 +529,17 @@ struct Dummy {
 #endif
 
 // ============================================================
-// Slider::bind and Switch::bind with State<T>
+// Slider::bind and Switch::bind with Subject<T>
 // ============================================================
 
 #if LV_USE_OBSERVER
 [[maybe_unused]] static void test_bind_state() {
     lv::Slider sl;
-    lv::State<int> int_state{50};
+    lv::Subject<int> int_state{50};
     sl.bind(int_state);
 
     lv::Switch sw;
-    lv::State<bool> bool_state{false};
+    lv::Subject<bool> bool_state{false};
     sw.bind(bool_state);
 
     lv::Label lbl;

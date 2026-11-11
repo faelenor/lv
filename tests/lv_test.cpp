@@ -395,32 +395,32 @@ TEST_CASE("grid layout methods") {
 #endif
 
 // ============================================================
-// Slider/Switch bind with State<T>
+// Slider/Switch bind with Subject<T>
 // ============================================================
 
 #if LV_USE_OBSERVER
-TEST_CASE("Slider::bind(State<int>)") {
+TEST_CASE("Slider::bind(Subject<int>)") {
     LvglFixture lv;
     auto slider = lv::Slider::create(lv.screen());
-    lv::State<int> state{50};
+    lv::Subject<int> state{50};
 
     slider.bind(state);
     CHECK(slider.get() != nullptr);
 }
 
-TEST_CASE("Switch::bind(State<bool>)") {
+TEST_CASE("Switch::bind(Subject<bool>)") {
     LvglFixture lv;
     auto sw = lv::Switch::create(lv.screen());
-    lv::State<bool> state{false};
+    lv::Subject<bool> state{false};
 
     sw.bind(state);
     CHECK(sw.get() != nullptr);
 }
 
-TEST_CASE("Label::bind_text(State<int>)") {
+TEST_CASE("Label::bind_text(Subject<int>)") {
     LvglFixture lv;
     auto label = lv::Label::create(lv.screen());
-    lv::State<int> state{42};
+    lv::Subject<int> state{42};
 
     label.bind_text(state, "Value: %d");
     CHECK(label.get() != nullptr);
@@ -699,31 +699,31 @@ TEST_CASE("ScreenComponent") {
 }
 
 // ============================================================
-// Phase 1 — State<T> & observers
+// Phase 1 — Subject<T> & observers
 // ============================================================
 
 #if LV_USE_OBSERVER
-TEST_CASE("State<int> set/get round-trip") {
+TEST_CASE("Subject<int> set/get round-trip") {
     LvglFixture lv;
-    lv::State<int> state{42};
+    lv::Subject<int> state{42};
 
     CHECK(state.get() == 42);
     state.set(100);
     CHECK(state.get() == 100);
 }
 
-TEST_CASE("State<bool> set/get round-trip") {
+TEST_CASE("Subject<bool> set/get round-trip") {
     LvglFixture lv;
-    lv::State<bool> state{false};
+    lv::Subject<bool> state{false};
 
     CHECK(state.get() == false);
     state.set(true);
     CHECK(state.get() == true);
 }
 
-TEST_CASE("State<int> increment/decrement operators") {
+TEST_CASE("Subject<int> increment/decrement operators") {
     LvglFixture lv;
-    lv::State<int> state{10};
+    lv::Subject<int> state{10};
 
     ++state;
     CHECK(state.get() == 11);
@@ -749,9 +749,9 @@ struct ObserverHelper {
     void on_change(int v) { last_value = v; }
 };
 
-TEST_CASE("State observer fires on change") {
+TEST_CASE("Subject observer fires on change") {
     LvglFixture lv;
-    lv::State<int> state{0};
+    lv::Subject<int> state{0};
     ObserverHelper helper;
 
     state.observe<&ObserverHelper::on_change>(&helper);
@@ -767,7 +767,7 @@ TEST_CASE("State observer fires on change") {
 
 TEST_CASE("observe_obj auto-removes when widget deleted") {
     LvglFixture lv;
-    lv::State<int> state{0};
+    lv::Subject<int> state{0};
     int observed = -1;
 
     auto box = lv::Box::create(lv.screen());

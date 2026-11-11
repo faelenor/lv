@@ -230,7 +230,7 @@ public:
     }
 
 #if LV_USE_OBSERVER
-    /// Animate integer subject value (for State<int>/IntState)
+    /// Animate integer subject value (for Subject<int>/IntSubject)
     Anim& exec_int_subject(lv_subject_t* subject) noexcept {
         lv_anim_set_var(&m_anim, subject);
         lv_anim_set_exec_cb(&m_anim, [](void* v, int32_t val) {

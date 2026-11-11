@@ -35,8 +35,8 @@ public:
 // ==================== Settings Screen ====================
 
 class SettingsScreen : public lv::Component<SettingsScreen> {
-    lv::State<int> m_brightness{75};
-    lv::State<int> m_volume{50};
+    lv::Subject<int> m_brightness{75};
+    lv::Subject<int> m_volume{50};
 
 public:
     lv::ObjectView build(lv::ObjectView parent) {

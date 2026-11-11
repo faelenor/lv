@@ -16,9 +16,9 @@
 
 namespace lv {
 
-// Forward declaration – full definition in core/state.hpp.
-// bind_text() below requires State<T> to be complete at the point of instantiation.
-template<typename T> class State;
+// Forward declaration – full definition in core/subject.hpp.
+// bind_text() below requires Subject<T> to be complete at the point of instantiation.
+template<typename T> class Subject;
 
 /**
  * @brief Label widget wrapper
@@ -281,9 +281,9 @@ public:
         return *this;
     }
 
-    /// Bind to State
+    /// Bind to Subject
     template<typename T>
-    Label& bind_text(State<T>& state, const char* fmt = nullptr) noexcept {
+    Label& bind_text(Subject<T>& state, const char* fmt = nullptr) noexcept {
         lv_label_bind_text(m_obj, state.subject(), fmt);
         return *this;
     }

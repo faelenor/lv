@@ -15,18 +15,18 @@ namespace ebike {
 /**
  * @brief Statistics page with tabs, chart, and stat cards
  *
- * Uses optional<IntState> for lazy initialization with RAII cleanup.
+ * Uses optional<IntSubject> for lazy initialization with RAII cleanup.
  */
 class StatsPage {
     lv::Box m_root;
 
     // Static state using C++ wrapper - persist across page switches
-    static inline std::optional<lv::IntState> s_mode;
-    static inline std::optional<lv::IntState> s_week;
-    static inline std::optional<lv::IntState> s_day;
-    static inline std::optional<lv::IntState> s_avg_speed;
-    static inline std::optional<lv::IntState> s_distance;
-    static inline std::optional<lv::IntState> s_top_speed;
+    static inline std::optional<lv::IntSubject> s_mode;
+    static inline std::optional<lv::IntSubject> s_week;
+    static inline std::optional<lv::IntSubject> s_day;
+    static inline std::optional<lv::IntSubject> s_avg_speed;
+    static inline std::optional<lv::IntSubject> s_distance;
+    static inline std::optional<lv::IntSubject> s_top_speed;
 
     static inline lv_obj_t* s_left_arrow = nullptr;
     static inline lv_obj_t* s_right_arrow = nullptr;
@@ -289,7 +289,7 @@ private:
         create_stat_card(cont, _("Top speed"), *s_top_speed, "%dkm/h");
     }
 
-    void create_stat_card(lv::ObjectView parent, const char* name, lv::IntState& state, const char* fmt) {
+    void create_stat_card(lv::ObjectView parent, const char* name, lv::IntSubject& state, const char* fmt) {
         auto cont = lv::Box::create(parent)
             .height(lv::kSize::content)
             .bg_opa(lv::opa::transp)
