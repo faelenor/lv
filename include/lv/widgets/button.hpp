@@ -158,9 +158,11 @@ public:
     }
     
     /// Bind to Subject<bool>
-    template<typename T>
-        requires std::is_same_v<T, bool>
-    Button& bind(const Subject<T>& state) noexcept {
+    /* Any handle on a bool subject - owned or borrowed - so a page whose subject belongs to
+     * the UI export binds as readily as one that owns its own. */
+    template<typename S>
+        requires std::is_same_v<typename S::ValueType, bool>
+    Button& bind(const S& state) noexcept {
         lv_obj_bind_checked(m_obj, state.handle());
         return *this;
     }

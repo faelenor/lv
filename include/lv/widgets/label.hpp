@@ -282,8 +282,10 @@ public:
     }
 
     /// Bind to Subject
-    template<typename T>
-    Label& bind_text(const Subject<T>& state, const char* fmt = nullptr) noexcept {
+    /* Any handle: the format string is what turns the value into text, so the value's own type
+     * is not constrained here. */
+    template<typename S>
+    Label& bind_text(const S& state, const char* fmt = nullptr) noexcept {
         lv_label_bind_text(m_obj, state.handle(), fmt);
         return *this;
     }

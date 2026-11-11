@@ -209,9 +209,10 @@ public:
     }
 
     /// Bind to Subject<int>
-    template<typename T>
-        requires (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t))
-    Slider& bind(const Subject<T>& state) noexcept {
+    /* Any handle on a subject LVGL keeps as an integer. */
+    template<typename S>
+        requires (std::is_integral_v<typename S::ValueType> && sizeof(typename S::ValueType) <= sizeof(int32_t))
+    Slider& bind(const S& state) noexcept {
         lv_slider_bind_value(m_obj, state.handle());
         return *this;
     }

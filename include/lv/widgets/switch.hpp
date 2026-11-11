@@ -134,9 +134,10 @@ public:
     }
 
     /// Bind to Subject<bool>
-    template<typename T>
-        requires std::is_same_v<T, bool>
-    Switch& bind(const Subject<T>& state) noexcept {
+    /* Any handle on a bool subject - owned or borrowed. */
+    template<typename S>
+        requires std::is_same_v<typename S::ValueType, bool>
+    Switch& bind(const S& state) noexcept {
         lv_obj_bind_checked(m_obj, state.handle());
         return *this;
     }

@@ -281,6 +281,8 @@ public:
     Subject(Subject&&) = delete;
     Subject& operator=(Subject&&) = delete;
 
+    using ValueType = T;
+
     /// The subject this state owns
     [[nodiscard]] lv_subject_t* subject() noexcept { return &m_subject; }
     [[nodiscard]] const lv_subject_t* subject() const noexcept { return &m_subject; }
@@ -308,6 +310,8 @@ public:
 
     /// Borrow the subject owned by a Subject of the same type
     constexpr SubjectRef(Subject<T>& owned) noexcept : m_subject(owned.subject()) {}
+
+    using ValueType = T;
 
     /// The subject being borrowed
     [[nodiscard]] lv_subject_t* subject() noexcept { return m_subject; }
