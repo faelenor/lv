@@ -53,8 +53,12 @@ private:
 public:
     // ==================== Accessors ====================
 
-    /// Get current value
+    /// Get current value. A handle with no subject yet reads as T{}.
     [[nodiscard]] T get() noexcept {
+        if (derived().subject() == nullptr) {
+            return T{};
+        }
+
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
             return static_cast<T>(lv_subject_get_int(derived().subject()));
         }
@@ -83,8 +87,12 @@ public:
         return get();
     }
 
-    /// Set new value (notifies observers if changed)
+    /// Set new value (notifies observers if changed). Writing to a handle with no subject
+    /// yet is ignored, which is what lets one be given its subject later.
     void set(const T& new_value) noexcept {
+        if (derived().subject() == nullptr) {
+            return;
+        }
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
             lv_subject_set_int(derived().subject(), static_cast<int32_t>(new_value));
         } else if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
