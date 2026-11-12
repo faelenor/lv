@@ -129,6 +129,11 @@ public:
         return lv_event_get_param(m_event);
     }
 
+    /// Get the key for a key event
+    [[nodiscard]] uint32_t key() const noexcept {
+        return lv_event_get_key(m_event);
+    }
+
     /// Get event parameter as typed pointer
     template<typename T>
     [[nodiscard]] T* param_as() const noexcept {
