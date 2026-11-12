@@ -31,6 +31,9 @@ public:
     /// Convert from any ObjectView (or ObjectView-derived type)
     constexpr ObjectRef(ObjectView v) noexcept : ObjectView(v.get()) {}
 
+    /// Construct from raw LVGL object pointer
+    constexpr ObjectRef(lv_obj_t* obj) noexcept : ObjectView(obj) {}
+
     /// Parent/child navigation returns ObjectRef for continued chaining
     [[nodiscard]] ObjectRef parent() const noexcept {
         return ObjectRef(lv_obj_get_parent(get()));

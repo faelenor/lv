@@ -125,7 +125,7 @@ protected:
 
 public:
     /// Construct from raw LVGL object pointer
-    constexpr explicit ObjectView(lv_obj_t* obj) noexcept : m_obj(obj) {}
+    constexpr ObjectView(lv_obj_t* obj) noexcept : m_obj(obj) {}
 
     /// Default constructor creates null view
     constexpr ObjectView() noexcept : m_obj(nullptr) {}
