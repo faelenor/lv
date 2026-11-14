@@ -62,6 +62,13 @@ public:
         return *this;
     }
 
+    /// Set what an insert event adds in place of its own text; `""` drops the insertion, and the
+    /// text must outlive the handler that sets it
+    Textarea& insert_replace(const char* txt) noexcept {
+        lv_textarea_set_insert_replace(m_obj, txt);
+        return *this;
+    }
+
     /// Delete character before cursor
     Textarea& del_char() noexcept {
         lv_textarea_delete_char(m_obj);
