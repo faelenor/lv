@@ -610,6 +610,29 @@ public:
         return *static_cast<Derived*>(this);
     }
 
+    // ==================== Blur ====================
+
+    /* Blur what is behind the object rather than the object itself, which is what a dim over a page
+     * wants. LVGL draws the blurred backdrop only where the part is short of full opacity, so this is
+     * meant to be paired with a background that is not opaque: at full opacity the blur is there and
+     * invisible. */
+    Derived& blur_backdrop(bool enable, lv_style_selector_t sel = 0) noexcept {
+        lv_obj_set_style_blur_backdrop(obj(), enable, sel);
+        return *static_cast<Derived*>(this);
+    }
+
+    /// How far the blur reaches. Softer with a larger radius, and more expensive with it.
+    Derived& blur_radius(int32_t radius, lv_style_selector_t sel = 0) noexcept {
+        lv_obj_set_style_blur_radius(obj(), radius, sel);
+        return *static_cast<Derived*>(this);
+    }
+
+    /// Whether the blur prefers speed or precision. Auto chooses per the radius.
+    Derived& blur_quality(lv_blur_quality_t quality, lv_style_selector_t sel = 0) noexcept {
+        lv_obj_set_style_blur_quality(obj(), quality, sel);
+        return *static_cast<Derived*>(this);
+    }
+
     // ==================== Border ====================
 
     Derived& border_color(lv_color_t color, lv_style_selector_t sel = 0) noexcept {
