@@ -934,6 +934,16 @@ public:
         return *static_cast<Derived*>(this);
     }
 
+    /// Scroll this object into view, moving whichever scrollable parent it is inside
+    ///
+    /// Recursive on purpose: scrolling into view on the immediate parent alone does nothing when that
+    /// parent's content already fits, which is the shape a page has - the row fits its list, and it is
+    /// the page above the list that scrolls to bring the row onto the glass.
+    Derived& scroll_to_view(lv_anim_enable_t anim_en = LV_ANIM_OFF) noexcept {
+        lv_obj_scroll_to_view_recursive(obj(), anim_en);
+        return *static_cast<Derived*>(this);
+    }
+
     /// Update scroll snap
     Derived& update_snap(lv_anim_enable_t anim_en) noexcept {
         lv_obj_update_snap(obj(), anim_en);
@@ -957,6 +967,17 @@ public:
     /// Move object to a specific sibling index (-1 counts from the back)
     Derived& move_to_index(int32_t index) noexcept {
         lv_obj_move_to_index(obj(), index);
+        return *static_cast<Derived*>(this);
+    }
+
+    /// This object's index among its parent's children
+    int32_t index() noexcept {
+        return lv_obj_get_index(obj());
+    }
+
+    /// Horizontal padding, both sides, as this object's own style
+    Derived& pad_hor(int32_t pad) noexcept {
+        lv_obj_set_style_pad_hor(obj(), pad, 0);
         return *static_cast<Derived*>(this);
     }
 
