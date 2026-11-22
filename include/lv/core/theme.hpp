@@ -129,6 +129,20 @@ inline void report_style_change()
     lv_obj_report_style_change(NULL);
 }
 
+/**
+ * @brief Draw everything that is invalidated now, in one refresh, instead of over the next several
+ *
+ * A full-screen invalidation is otherwise served across a run of refreshes - LVGL draws the areas it
+ * can hold in one pass and leaves the rest for the next, which is a few seconds' worth of screen seen
+ * in the wrong palette when the invalidation is a palette change. Anything the run has not reached yet
+ * keeps the colours it had, so the page appears to change from the top down and stops where it stops.
+ * This draws the whole invalidated set immediately, which is what a change of mode wants to look like.
+ */
+inline void refresh_now()
+{
+    lv_refr_now(NULL);
+}
+
 /// Get default theme
 inline lv_theme_t* theme_default_get() noexcept {
     return lv_theme_default_get();
