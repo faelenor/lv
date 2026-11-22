@@ -115,6 +115,20 @@ inline lv_theme_t* theme_default_init(lv_display_t* disp, lv_color_t primary, lv
     return lv_theme_default_init(disp, primary, secondary, dark, font);
 }
 
+/**
+ * @brief Make a style change take effect on the live screen
+ *
+ * Re-initialising a theme replaces the pointer; it draws nothing. Everything already on the screen keeps
+ * the pixels the old palette gave it until something invalidates it, so the areas that nothing else
+ * happens to redraw - the empty space below a list, the leftover in a bar - keep the previous mode's
+ * colours while every row that updates itself looks correct. Call this after a theme or style change and
+ * every object is told its styles have moved, which is what redraws them.
+ */
+inline void report_style_change()
+{
+    lv_obj_report_style_change(NULL);
+}
+
 /// Get default theme
 inline lv_theme_t* theme_default_get() noexcept {
     return lv_theme_default_get();
