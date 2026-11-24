@@ -29,6 +29,7 @@
  */
 
 #include <lvgl.h>
+#include <array>
 #include <type_traits>
 #include <cstdint>
 #include <cstring>
@@ -243,18 +244,43 @@ public:
 };
 
 /**
- * @brief Reactive state container that owns its subject (stack-allocated)
+ * @brief Where a subject's own buffers live, when its type has any
+ *
+ * A string subject does not keep its text: it writes through pointers its owner gives it, and those
+ * must outlive it (see lv_subject_set_string_buffer_static). They are members of the handle, in this
+ * base, so the pointers cannot dangle and nothing is allocated for them. Deleting a subject frees
+ * the subject and its observers, never buffers it was handed.
+ *
+ * The size is the whole of a string Subject's text, and a longer initial value is truncated into it.
+ *
+ * Every other value type has none, and this base is empty for them, which costs nothing. The subject
+ * holds the pointers, so a handle must not move - which is why Subject is neither copyable nor
+ * movable.
+ */
+template<typename T>
+struct SubjectStorage {};
+
+template<>
+struct SubjectStorage<std::string> {
+    static constexpr size_t kStringSize = 16;
+    std::array<char, kStringSize> value{};
+    std::array<char, kStringSize> previous{};
+};
+
+/**
+ * @brief Reactive state container that owns its subject
  *
  * Wraps LVGL's lv_subject_t for reactive data binding. When state changes, all bound
  * widgets automatically update.
  *
- * Size: sizeof(lv_subject_t) + sizeof(T) - approximately 48-56 bytes
- * Heap allocation: NONE
+ * Size: a pointer, plus whatever buffers the value type needs - 32 bytes of them for std::string,
+ * and none for the rest, where the storage base is empty.
+ * Heap allocation: the subject itself, on LVGL's list, made by lv_subject_create
  *
  * @tparam T Value type (int32_t, lv_color_t, pointer types supported)
  */
 template<typename T>
-class Subject : public SubjectMixin<Subject<T>, T> {
+class Subject : public SubjectMixin<Subject<T>, T>, public SubjectStorage<T> {
 private:
     lv_subject_t* m_subject = nullptr;
 
@@ -268,12 +294,11 @@ public:
             m_subject = lv_subject_create(LV_SUBJECT_TYPE_FLOAT);
             if (m_subject) lv_subject_set_float(m_subject, static_cast<float>(initial));
         } else if constexpr (std::is_same_v<T, std::string>) {
-            // A string subject writes into buffers its owner keeps, so they are made here. They are
-            // never freed: this class has nowhere to hold them, and deleting the subject does not
-            // delete buffers it was handed. A string Subject therefore leaks its two buffers.
+            auto& buffers = static_cast<SubjectStorage<std::string>&>(*this);
             m_subject = lv_subject_create(LV_SUBJECT_TYPE_STRING);
             if (m_subject) {
-                lv_subject_set_string_buffer_static(m_subject, new char[16], new char[16], 16);
+                lv_subject_set_string_buffer_static(m_subject, buffers.value.data(),
+                                                    buffers.previous.data(), buffers.value.size());
                 lv_subject_set_string(m_subject, initial.c_str());
             }
         } else if constexpr (std::is_pointer_v<T>) {
@@ -347,7 +372,7 @@ using BoolSubject = Subject<bool>;
 /// Color state
 using ColorSubject = Subject<lv_color_t>;
 
-// ==================== Zero-Cost Verification ====================
+// ==================== Handle Size Verification ====================
 
 // Static assertions on the handles' cost. A Subject is a pointer to its subject and the value
 // it caches nothing of; the subject itself is on LVGL's list.
