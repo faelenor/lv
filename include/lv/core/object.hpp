@@ -191,12 +191,16 @@ public:
         return lv_obj_get_state(m_obj);
     }
 
-    /// Check if object has flag
-    [[nodiscard]] bool has_flag(lv_obj_flag_t flag) const noexcept {
-        return lv_obj_has_flag(m_obj, flag);
-    }
-
     // ==================== Type Identification ====================
+
+    /// Get whether the object is hidden
+    ///
+    /// The per-flag getters are the way to ask: LVGL deprecates the generic lv_obj_has_flag and
+    /// offers no generic replacement, so there is no generic counterpart here. The generic setters
+    /// are on the fluent side, in add_flag and its siblings.
+    [[nodiscard]] bool hidden() const noexcept {
+        return lv_obj_is_hidden(m_obj);
+    }
 
     /// Get the object's LVGL class pointer.
     [[nodiscard]] const lv_obj_class_t* get_class() const noexcept {
@@ -656,20 +660,19 @@ public:
 
     /// Hide the object
     Derived& hide() noexcept {
-        lv_obj_add_flag(obj(), LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(obj(), true);
         return *static_cast<Derived*>(this);
     }
 
     /// Show the object
     Derived& show() noexcept {
-        lv_obj_remove_flag(obj(), LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(obj(), false);
         return *static_cast<Derived*>(this);
     }
 
     /// Set visibility
     Derived& visible(bool v) noexcept {
-        if (v) lv_obj_remove_flag(obj(), LV_OBJ_FLAG_HIDDEN);
-        else lv_obj_add_flag(obj(), LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(obj(), !v);
         return *static_cast<Derived*>(this);
     }
 
@@ -677,18 +680,24 @@ public:
 
     /// Set clickable flag
     Derived& clickable(bool v = true) noexcept {
-        if (v) lv_obj_add_flag(obj(), LV_OBJ_FLAG_CLICKABLE);
-        else lv_obj_remove_flag(obj(), LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_clickable(obj(), v);
         return *static_cast<Derived*>(this);
     }
 
-    /// Add object flags
+    /**
+     * @brief Add object flags
+     *
+     * Takes any lv_obj_flag_t, which is why it goes through the generic C call rather than a
+     * dedicated setter. LVGL deprecates that generic form, so this method - and remove_flag and
+     * has_flag below - warns at every call site; the per-flag methods (hide, clickable,
+     * scrollable, and the rest) are how to write a call that does not.
+     */
     Derived& add_flag(lv_obj_flag_t flag) noexcept {
         lv_obj_add_flag(obj(), flag);
         return *static_cast<Derived*>(this);
     }
 
-    /// Remove object flags
+    /// Remove object flags - see add_flag for why this warns
     Derived& remove_flag(lv_obj_flag_t flag) noexcept {
         lv_obj_remove_flag(obj(), flag);
         return *static_cast<Derived*>(this);
@@ -737,8 +746,7 @@ public:
 
     /// Enable/disable scrolling
     Derived& scrollable(bool v = true) noexcept {
-        if (v) lv_obj_add_flag(obj(), LV_OBJ_FLAG_SCROLLABLE);
-        else lv_obj_remove_flag(obj(), LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_scrollable(obj(), v);
         return *static_cast<Derived*>(this);
     }
 

@@ -208,7 +208,7 @@ public:
      * @brief Check if component is visible
      */
     [[nodiscard]] bool is_visible() const noexcept {
-        return m_root && !lv_obj_has_flag(m_root, LV_OBJ_FLAG_HIDDEN);
+        return m_root && !lv_obj_is_hidden(m_root);
     }
 
     /**
@@ -216,7 +216,7 @@ public:
      */
     void hide() noexcept {
         if (m_root) {
-            lv_obj_add_flag(m_root, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_hidden(m_root, true);
         }
     }
 
@@ -225,7 +225,7 @@ public:
      */
     void show() noexcept {
         if (m_root) {
-            lv_obj_remove_flag(m_root, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_hidden(m_root, false);
         }
     }
 

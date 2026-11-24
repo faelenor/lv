@@ -161,19 +161,19 @@ public:
 
     /// Hide the keyboard
     Keyboard& hide() noexcept {
-        lv_obj_add_flag(m_obj, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(m_obj, true);
         return *this;
     }
 
     /// Show the keyboard
     Keyboard& show() noexcept {
-        lv_obj_remove_flag(m_obj, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(m_obj, false);
         return *this;
     }
 
     /// Check if keyboard is hidden
     [[nodiscard]] bool is_hidden() const noexcept {
-        return lv_obj_has_flag(m_obj, LV_OBJ_FLAG_HIDDEN);
+        return lv_obj_is_hidden(m_obj);
     }
 
     /// Get selected button

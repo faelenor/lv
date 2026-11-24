@@ -77,7 +77,7 @@ public:
     [[nodiscard]] static Box create(lv_obj_t* parent) {
         Box box;
         box.m_obj = lv_obj_create(parent);
-        lv_obj_remove_flag(box.m_obj, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_scrollable(box.m_obj, false);
         return box;
     }
 

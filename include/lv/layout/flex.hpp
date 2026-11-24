@@ -44,7 +44,7 @@ public:
         lv_obj_set_flex_flow(m_obj, flow);
         // Default: size to content, no scrolling
         lv_obj_set_size(m_obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-        lv_obj_remove_flag(m_obj, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_scrollable(m_obj, false);
     }
 
     /// Wrap existing object as flex container (for wrapping raw pointers)

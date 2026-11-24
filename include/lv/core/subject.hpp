@@ -4,9 +4,11 @@
  * @file subject.hpp
  * @brief Reactive state in two forms: one that owns its subject, one that borrows.
  *
- * Subject<T> owns an lv_subject_t and initialises it in place. No heap allocation, and the
- * subject lives exactly as long as the Subject does - which is what makes it usable for
- * application state declared as a member.
+ * Subject<T> creates its subject with lv_subject_create and deletes it in the destructor, so the
+ * subject lives exactly as long as the Subject does. That is a heap allocation, and the subject sits
+ * on LVGL's own list of them: the create/delete pair is what LVGL offers, and the in-place form it
+ * replaces is deprecated. The subject is made in the constructor, so a Subject must be constructed
+ * after lv_init - it cannot be a global.
  *
  * SubjectRef<T> borrows one. It is built from an lv_subject_t* and owns nothing, so it wraps a
  * subject created elsewhere: one the LVGL Pro export generated, for instance, where the
@@ -20,8 +22,10 @@
  *
  *     lv_subject_t* subject() noexcept;
  *
- * SubjectRef is pointer-sized. Subject is one lv_subject_t plus its value - unchanged from when
- * it was the only form, because the mixin holds nothing and the empty base costs nothing.
+ * A Subject whose creation failed holds no subject at all, which is a state the interface
+ * already allows: a handle with none reads as T{} and ignores writes.
+ *
+ * Subject is a pointer and its value; SubjectRef is the pointer alone.
  */
 
 #include <lvgl.h>
@@ -109,7 +113,10 @@ public:
         } else if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
             lv_subject_set_float(derived().subject(), static_cast<float>(new_value));
         } else if constexpr (std::is_same_v<T, std::string>) {
-            lv_subject_copy_string(derived().subject(), new_value.c_str());
+            // Writes into the buffers the subject's owner set up; a string subject created by
+            // Subject<T> has its own, and one borrowed through SubjectRef has whatever the code that
+            // made it gave it.
+            lv_subject_set_string(derived().subject(), new_value.c_str());
         } else if constexpr (std::is_pointer_v<T>) {
             lv_subject_set_pointer(derived().subject(), static_cast<void*>(new_value));
         } else if constexpr (std::is_same_v<T, lv_color_t>) {
@@ -249,28 +256,38 @@ public:
 template<typename T>
 class Subject : public SubjectMixin<Subject<T>, T> {
 private:
-    lv_subject_t m_subject;
+    lv_subject_t* m_subject = nullptr;
 
 public:
     /// Construct with initial value
     explicit Subject(const T& initial = T{}) noexcept {
         if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(int32_t)) {
-            lv_subject_init_int(&m_subject, static_cast<int32_t>(initial));
+            m_subject = lv_subject_create(LV_SUBJECT_TYPE_INT);
+            if (m_subject) lv_subject_set_int(m_subject, static_cast<int32_t>(initial));
         } else if constexpr (std::is_floating_point_v<T> && sizeof(T) <= sizeof(float)) {
-            lv_subject_init_float(&m_subject, static_cast<float>(initial));
+            m_subject = lv_subject_create(LV_SUBJECT_TYPE_FLOAT);
+            if (m_subject) lv_subject_set_float(m_subject, static_cast<float>(initial));
         } else if constexpr (std::is_same_v<T, std::string>) {
-            // Ugly, but it works for now...
-            lv_subject_init_string(&m_subject, new char[16], new char[16], 16, initial.c_str());
+            // A string subject writes into buffers its owner keeps, so they are made here. They are
+            // never freed: this class has nowhere to hold them, and deleting the subject does not
+            // delete buffers it was handed. A string Subject therefore leaks its two buffers.
+            m_subject = lv_subject_create(LV_SUBJECT_TYPE_STRING);
+            if (m_subject) {
+                lv_subject_set_string_buffer_static(m_subject, new char[16], new char[16], 16);
+                lv_subject_set_string(m_subject, initial.c_str());
+            }
         } else if constexpr (std::is_pointer_v<T>) {
-            lv_subject_init_pointer(&m_subject, static_cast<void*>(initial), T());
+            m_subject = lv_subject_create(LV_SUBJECT_TYPE_POINTER);
+            if (m_subject) lv_subject_set_pointer(m_subject, static_cast<void*>(initial));
         } else if constexpr (std::is_same_v<T, lv_color_t>) {
-            lv_subject_init_color(&m_subject, initial);
+            m_subject = lv_subject_create(LV_SUBJECT_TYPE_COLOR);
+            if (m_subject) lv_subject_set_color(m_subject, initial);
         }
     }
 
     /// Destructor
     ~Subject() noexcept {
-        lv_subject_deinit(&m_subject);
+        lv_subject_delete(m_subject);
     }
 
     // Non-copyable (subjects can't be copied)
@@ -284,8 +301,8 @@ public:
     using ValueType = T;
 
     /// The subject this state owns
-    [[nodiscard]] lv_subject_t* subject() noexcept { return &m_subject; }
-    [[nodiscard]] const lv_subject_t* subject() const noexcept { return &m_subject; }
+    [[nodiscard]] lv_subject_t* subject() noexcept { return m_subject; }
+    [[nodiscard]] const lv_subject_t* subject() const noexcept { return m_subject; }
 };
 
 /**
@@ -332,14 +349,14 @@ using ColorSubject = Subject<lv_color_t>;
 
 // ==================== Zero-Cost Verification ====================
 
-// Static assertions to verify Subject<T> overhead is minimal
-// Subject must be exactly lv_subject_t + T (no vtable, no extra padding beyond alignment)
-static_assert(sizeof(IntSubject) <= sizeof(lv_subject_t) + sizeof(int32_t) + alignof(lv_subject_t),
-    "IntSubject should have minimal overhead over lv_subject_t + value");
-static_assert(sizeof(BoolSubject) <= sizeof(lv_subject_t) + sizeof(bool) + alignof(lv_subject_t),
-    "BoolSubject should have minimal overhead over lv_subject_t + value");
-static_assert(sizeof(ColorSubject) <= sizeof(lv_subject_t) + sizeof(lv_color_t) + alignof(lv_subject_t),
-    "ColorSubject should have minimal overhead over lv_subject_t + value");
+// Static assertions on the handles' cost. A Subject is a pointer to its subject and the value
+// it caches nothing of; the subject itself is on LVGL's list.
+static_assert(sizeof(IntSubject) <= sizeof(lv_subject_t*) + sizeof(int32_t) + alignof(lv_subject_t*),
+    "IntSubject should be a pointer and a value");
+static_assert(sizeof(BoolSubject) <= sizeof(lv_subject_t*) + sizeof(bool) + alignof(lv_subject_t*),
+    "BoolSubject should be a pointer and a value");
+static_assert(sizeof(ColorSubject) <= sizeof(lv_subject_t*) + sizeof(lv_color_t) + alignof(lv_subject_t*),
+    "ColorSubject should be a pointer and a value");
 
 // A borrowing handle must cost one pointer and nothing else
 static_assert(sizeof(SubjectRef<int32_t>) == sizeof(void*),

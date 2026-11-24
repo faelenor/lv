@@ -109,11 +109,7 @@ public:
 
     /// Set checkable state (toggle button)
     Button& checkable(bool enable = true) noexcept {
-        if (enable) {
-            lv_obj_add_flag(m_obj, LV_OBJ_FLAG_CHECKABLE);
-        } else {
-            lv_obj_remove_flag(m_obj, LV_OBJ_FLAG_CHECKABLE);
-        }
+        lv_obj_set_checkable(m_obj, enable);
         return *this;
     }
 

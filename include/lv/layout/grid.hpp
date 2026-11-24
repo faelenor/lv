@@ -67,7 +67,7 @@ public:
         : ObjectView(lv_obj_create(parent)) {
         lv_obj_set_layout(m_obj, LV_LAYOUT_GRID);
         lv_obj_set_size(m_obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-        lv_obj_remove_flag(m_obj, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_scrollable(m_obj, false);
     }
 
     Grid(lv::wrap_t, lv_obj_t* obj) noexcept
