@@ -703,6 +703,18 @@ public:
         return *static_cast<Derived*>(this);
     }
 
+    /// Enable or disable checkable state toggling on click (LVGL v9 dedicated setter)
+    Derived& checkable(bool en = true) noexcept {
+        lv_obj_set_checkable(obj(), en);
+        return *static_cast<Derived*>(this);
+    }
+
+    /// Enable or disable scroll chaining to parent containers (LVGL v9 dedicated setter)
+    Derived& scroll_chain(bool en = true) noexcept {
+        lv_obj_set_scroll_chain(obj(), en);
+        return *static_cast<Derived*>(this);
+    }
+
     // ==================== State ====================
 
     /// Add state flags
